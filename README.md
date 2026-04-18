@@ -84,7 +84,7 @@ The goal is to build a model that accurately predicts sales using these features
 - Add visualization dashboard
 - Improve model accuracy
   
-- 👤 Author
+## 👤 Author
 
 Swagath Reddy
 
