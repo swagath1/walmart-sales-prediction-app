@@ -83,7 +83,8 @@ The goal is to build a model that accurately predicts sales using these features
 - Hyperparameter tuning
 - Add visualization dashboard
 - Improve model accuracy
-👤 Author
+  
+- 👤 Author
 
 Swagath Reddy
 
