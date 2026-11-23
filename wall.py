@@ -7,14 +7,35 @@ st.set_page_config(page_title="Walmart Sales Prediction", page_icon="🛒", layo
 st.title("🛒 Walmart Weekly Sales Prediction")
 st.markdown("Enter the feature values below to estimate **Weekly Sales**.")
 
+from pathlib import Path
+import pickle
+
+BASE_DIR = Path(__file__).resolve().parent
+
 
 @st.cache_resource
 def load_artifacts():
-    model_path = "wallmart_sales.pkl" if os.path.exists("wallmart_sales.pkl") else "walmart_sales.pkl"
+    candidate_models = [
+        BASE_DIR / "wallmart_sales.pkl",
+        BASE_DIR / "walmart_sales.pkl",
+        BASE_DIR / "model.pkl",
+    ]
+    model_path = next((p for p in candidate_models if p.exists()), None)
+    cols_path = BASE_DIR / "columns.pkl"
+
+    if model_path is None or not cols_path.exists():
+        files_in_dir = sorted(p.name for p in BASE_DIR.iterdir())
+        raise FileNotFoundError(
+            f"Missing model or columns.pkl in {BASE_DIR}. "
+            f"Found files: {files_in_dir}. "
+            "Make sure both .pkl files are pushed to your GitHub repo."
+        )
+
     with open(model_path, "rb") as f:
         model = pickle.load(f)
-    with open("columns.pkl", "rb") as f:
+    with open(cols_path, "rb") as f:
         columns = pickle.load(f)
+
     return model, columns
 
 
