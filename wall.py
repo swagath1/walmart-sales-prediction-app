@@ -15,21 +15,25 @@ BASE_DIR = Path(__file__).resolve().parent
 
 @st.cache_resource
 def load_artifacts():
+    cols_path = BASE_DIR / "columns.pkl"
+    if not cols_path.exists():
+        raise FileNotFoundError(f"Missing columns.pkl in {BASE_DIR}")
+
     candidate_models = [
+        BASE_DIR / "wallmart_sales (5).pkl",
         BASE_DIR / "wallmart_sales.pkl",
         BASE_DIR / "walmart_sales.pkl",
-        BASE_DIR / "model.pkl",
     ]
     model_path = next((p for p in candidate_models if p.exists()), None)
-    cols_path = BASE_DIR / "columns.pkl"
 
-    if model_path is None or not cols_path.exists():
-        files_in_dir = sorted(p.name for p in BASE_DIR.iterdir())
-        raise FileNotFoundError(
-            f"Missing model or columns.pkl in {BASE_DIR}. "
-            f"Found files: {files_in_dir}. "
-            "Make sure both .pkl files are pushed to your GitHub repo."
-        )
+    if model_path is None:
+        other_pkls = [
+            p for p in BASE_DIR.glob("*.pkl") if p.name != "columns.pkl"
+        ]
+        model_path = other_pkls[0] if other_pkls else None
+
+    if model_path is None:
+        raise FileNotFoundError(f"No model .pkl file found in {BASE_DIR}")
 
     with open(model_path, "rb") as f:
         model = pickle.load(f)
