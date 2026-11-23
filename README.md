@@ -9,7 +9,7 @@ It helps businesses forecast demand, optimize inventory, and improve decision-ma
 🚀 Live App
 
 👉 Try the app here:
-🔗 (https://walmart-sales-prediction-app-2awxnflmscxhf4gpvf546c.streamlit.app/)
+🔗 (https://walmart-sales-prediction-app-k4uja4pi3xchrajpmxgjac.streamlit.app/)
 
 🎯 Problem Statement
 
