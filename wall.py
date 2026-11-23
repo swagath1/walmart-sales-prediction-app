@@ -1,57 +1,81 @@
-import streamlit as st
+import os
 import pickle
 import pandas as pd
+import streamlit as st
 
-# Load model and columns
-model = pickle.load(open("wallmart_sales.pkl", "rb"))
-columns = pickle.load(open("columns.pkl", "rb"))
-
-st.title("🛒 Walmart Sales Prediction")
-
-st.write("Enter details to predict weekly sales")
+st.set_page_config(page_title="Walmart Sales Prediction", page_icon="🛒", layout="centered")
+st.title("🛒 Walmart Weekly Sales Prediction")
+st.markdown("Enter the feature values below to estimate **Weekly Sales**.")
 
 
-temp = st.number_input("Temperature")
-fuel = st.number_input("Fuel Price")
-month = st.number_input("Month (1-12)", min_value=1, max_value=12)
-week = st.number_input("Week (1-52)", min_value=1, max_value=52)
-holiday = st.selectbox("Is Holiday", [0, 1])
-type_input = st.selectbox("Store Type", ["A", "B", "C"])
+@st.cache_resource
+def load_artifacts():
+    model_path = "wallmart_sales.pkl" if os.path.exists("wallmart_sales.pkl") else "walmart_sales.pkl"
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    with open("columns.pkl", "rb") as f:
+        columns = pickle.load(f)
+    return model, columns
 
 
-if st.button("Predict Sales"):
+model, columns = load_artifacts()
 
-    # Create empty input dict with all columns
-    input_dict = {col: 0 for col in columns}
+col1, col2 = st.columns(2)
 
-    # Fill user inputs
-    if "Temperature" in input_dict:
-        input_dict["Temperature"] = temp
+with col1:
+    store = st.number_input("Store", min_value=1, max_value=45, value=1, step=1)
+    dept = st.number_input("Dept", min_value=1, max_value=99, value=1, step=1)
+    year = st.number_input("Year", min_value=2010, max_value=2030, value=2012, step=1)
+    month = st.number_input("Month", min_value=1, max_value=12, value=11, step=1)
+    week = st.number_input("Week", min_value=1, max_value=53, value=45, step=1)
+    is_holiday = st.selectbox("IsHoliday", options=[0, 1], index=0)
 
-    if "Fuel_Price" in input_dict:
-        input_dict["Fuel_Price"] = fuel
+with col2:
+    store_type = st.selectbox("Store Type", options=["A", "B", "C"], index=0)
+    size = st.number_input("Size", min_value=0.0, value=151315.0, step=1000.0)
+    temperature = st.number_input("Temperature", value=60.0)
+    fuel_price = st.number_input("Fuel_Price", min_value=0.0, value=3.50, format="%.3f")
+    cpi = st.number_input("CPI", min_value=0.0, value=175.0)
+    unemployment = st.number_input("Unemployment", min_value=0.0, value=7.5)
 
-    if "Month" in input_dict:
-        input_dict["Month"] = month
+with st.expander("Optional MarkDown Values (Leave as 0 if none)"):
+    md1 = st.number_input("MarkDown1", value=0.0)
+    md2 = st.number_input("MarkDown2", value=0.0)
+    md3 = st.number_input("MarkDown3", value=0.0)
+    md4 = st.number_input("MarkDown4", value=0.0)
+    md5 = st.number_input("MarkDown5", value=0.0)
 
-    if "Week" in input_dict:
-        input_dict["Week"] = week
+if st.button("Predict Weekly Sales", type="primary", use_container_width=True):
+    row = {col: 0 for col in columns}
 
-    if "IsHoliday" in input_dict:
-        input_dict["IsHoliday"] = holiday
+    values = {
+        "Store": store,
+        "Dept": dept,
+        "Year": year,
+        "Month": month,
+        "Week": week,
+        "IsHoliday": is_holiday,
+        "Size": size,
+        "Temperature": temperature,
+        "Fuel_Price": fuel_price,
+        "CPI": cpi,
+        "Unemployment": unemployment,
+        "MarkDown1": md1,
+        "MarkDown2": md2,
+        "MarkDown3": md3,
+        "MarkDown4": md4,
+        "MarkDown5": md5,
+    }
 
-    # Handle Type (get_dummies)
-    if type_input == "A" and "Type_A" in input_dict:
-        input_dict["Type_A"] = 1
-    elif type_input == "B" and "Type_B" in input_dict:
-        input_dict["Type_B"] = 1
-    elif type_input == "C" and "Type_C" in input_dict:
-        input_dict["Type_C"] = 1
+    for k, v in values.items():
+        if k in row:
+            row[k] = v
 
-    # Convert to DataFrame
-    input_df = pd.DataFrame([input_dict])
+    type_col = f"Type_{store_type}"
+    if type_col in row:
+        row[type_col] = 1
 
-    # Prediction
-    prediction = model.predict(input_df)
+    input_df = pd.DataFrame([row]).reindex(columns=columns, fill_value=0)
+    prediction = model.predict(input_df)[0]
 
-    st.success(f"💰 Predicted Weekly Sales: {prediction[0]:,.2f}")
+    st.success(f"### Predicted Weekly Sales: ${prediction:,.2f}")
